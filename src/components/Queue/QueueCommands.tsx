@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useRef } from "react"
-import { createRoot } from "react-dom/client"
+import React, { useEffect, useRef, useState } from "react";
+import { createRoot } from "react-dom/client";
 
-import { useToast } from "../../contexts/toast"
-import { LanguageSelector } from "../shared/LanguageSelector"
-import { COMMAND_KEY } from "../../utils/platform"
+import { useToast } from "../../contexts/toast";
+import { COMMAND_KEY } from "../../utils/platform";
+import { LanguageSelector } from "../shared/LanguageSelector";
 
 interface QueueCommandsProps {
-  onTooltipVisibilityChange: (visible: boolean, height: number) => void
-  screenshotCount?: number
-  credits: number
-  currentLanguage: string
-  setLanguage: (language: string) => void
+  onTooltipVisibilityChange: (visible: boolean, height: number) => void;
+  screenshotCount?: number;
+  credits: number;
+  currentLanguage: string;
+  setLanguage: (language: string) => void;
 }
 
 const QueueCommands: React.FC<QueueCommandsProps> = ({
@@ -18,56 +18,51 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
   screenshotCount = 0,
   credits,
   currentLanguage,
-  setLanguage
+  setLanguage,
 }) => {
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false)
-  const tooltipRef = useRef<HTMLDivElement>(null)
-  const { showToast } = useToast()
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const { showToast } = useToast();
 
   // Extract the repeated language selection logic into a separate function
-  const extractLanguagesAndUpdate = (direction?: 'next' | 'prev') => {
+  const extractLanguagesAndUpdate = (direction?: "next" | "prev") => {
     // Create a hidden instance of LanguageSelector to extract languages
-    const hiddenRenderContainer = document.createElement('div');
-    hiddenRenderContainer.style.position = 'absolute';
-    hiddenRenderContainer.style.left = '-9999px';
+    const hiddenRenderContainer = document.createElement("div");
+    hiddenRenderContainer.style.position = "absolute";
+    hiddenRenderContainer.style.left = "-9999px";
     document.body.appendChild(hiddenRenderContainer);
-    
+
     // Create a root and render the LanguageSelector temporarily
     const root = createRoot(hiddenRenderContainer);
-    root.render(
-      <LanguageSelector 
-        currentLanguage={currentLanguage} 
-        setLanguage={() => {}}
-      />
-    );
-    
+    root.render(<LanguageSelector currentLanguage={currentLanguage} setLanguage={() => {}} />);
+
     // Use a small delay to ensure the component has rendered
     // 50ms is generally enough for React to complete a render cycle
     setTimeout(() => {
       // Extract options from the rendered select element
-      const selectElement = hiddenRenderContainer.querySelector('select');
+      const selectElement = hiddenRenderContainer.querySelector("select");
       if (selectElement) {
         const options = Array.from(selectElement.options);
-        const values = options.map(opt => opt.value);
-        
+        const values = options.map((opt) => opt.value);
+
         // Find current language index
         const currentIndex = values.indexOf(currentLanguage);
         let newIndex = currentIndex;
-        
-        if (direction === 'prev') {
+
+        if (direction === "prev") {
           // Go to previous language
           newIndex = (currentIndex - 1 + values.length) % values.length;
         } else {
           // Default to next language
           newIndex = (currentIndex + 1) % values.length;
         }
-        
+
         if (newIndex !== currentIndex) {
           setLanguage(values[newIndex]);
           window.electronAPI.updateConfig({ language: values[newIndex] });
         }
       }
-      
+
       // Clean up
       root.unmount();
       document.body.removeChild(hiddenRenderContainer);
@@ -75,43 +70,43 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
   };
 
   useEffect(() => {
-    let tooltipHeight = 0
+    let tooltipHeight = 0;
     if (tooltipRef.current && isTooltipVisible) {
-      tooltipHeight = tooltipRef.current.offsetHeight + 10
+      tooltipHeight = tooltipRef.current.offsetHeight + 10;
     }
-    onTooltipVisibilityChange(isTooltipVisible, tooltipHeight)
-  }, [isTooltipVisible])
+    onTooltipVisibilityChange(isTooltipVisible, tooltipHeight);
+  }, [isTooltipVisible]);
 
   const handleSignOut = async () => {
     try {
       // Clear any local storage or electron-specific data
       localStorage.clear();
       sessionStorage.clear();
-      
+
       // Clear the API key in the configuration
       await window.electronAPI.updateConfig({
-        apiKey: '',
+        apiKey: "",
       });
-      
-      showToast('Success', 'Logged out successfully', 'success');
-      
+
+      showToast("Success", "Logged out successfully", "success");
+
       // Reload the app after a short delay
       setTimeout(() => {
         window.location.reload();
       }, 1500);
     } catch (err) {
       console.error("Error logging out:", err);
-      showToast('Error', 'Failed to log out', 'error');
+      showToast("Error", "Failed to log out", "error");
     }
-  }
+  };
 
   const handleMouseEnter = () => {
-    setIsTooltipVisible(true)
-  }
+    setIsTooltipVisible(true);
+  };
 
   const handleMouseLeave = () => {
-    setIsTooltipVisible(false)
-  }
+    setIsTooltipVisible(false);
+  };
 
   return (
     <div>
@@ -122,14 +117,14 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
             className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
             onClick={async () => {
               try {
-                const result = await window.electronAPI.triggerScreenshot()
+                const result = await window.electronAPI.triggerScreenshot();
                 if (!result.success) {
-                  console.error("Failed to take screenshot:", result.error)
-                  showToast("Error", "Failed to take screenshot", "error")
+                  console.error("Failed to take screenshot:", result.error);
+                  showToast("Error", "Failed to take screenshot", "error");
                 }
               } catch (error) {
-                console.error("Error taking screenshot:", error)
-                showToast("Error", "Failed to take screenshot", "error")
+                console.error("Error taking screenshot:", error);
+                showToast("Error", "Failed to take screenshot", "error");
               }
             }}
           >
@@ -163,20 +158,15 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                 credits <= 0 ? "opacity-50 cursor-not-allowed" : ""
               }`}
               onClick={async () => {
-
                 try {
-                  const result =
-                    await window.electronAPI.triggerProcessScreenshots()
+                  const result = await window.electronAPI.triggerProcessScreenshots();
                   if (!result.success) {
-                    console.error(
-                      "Failed to process screenshots:",
-                      result.error
-                    )
-                    showToast("Error", "Failed to process screenshots", "error")
+                    console.error("Failed to process screenshots:", result.error);
+                    showToast("Error", "Failed to process screenshots", "error");
                   }
                 } catch (error) {
-                  console.error("Error processing screenshots:", error)
-                  showToast("Error", "Failed to process screenshots", "error")
+                  console.error("Error processing screenshots:", error);
+                  showToast("Error", "Failed to process screenshots", "error");
                 }
               }}
             >
@@ -238,26 +228,14 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                         className="cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
                         onClick={async () => {
                           try {
-                            const result =
-                              await window.electronAPI.toggleMainWindow()
+                            const result = await window.electronAPI.toggleMainWindow();
                             if (!result.success) {
-                              console.error(
-                                "Failed to toggle window:",
-                                result.error
-                              )
-                              showToast(
-                                "Error",
-                                "Failed to toggle window",
-                                "error"
-                              )
+                              console.error("Failed to toggle window:", result.error);
+                              showToast("Error", "Failed to toggle window", "error");
                             }
                           } catch (error) {
-                            console.error("Error toggling window:", error)
-                            showToast(
-                              "Error",
-                              "Failed to toggle window",
-                              "error"
-                            )
+                            console.error("Error toggling window:", error);
+                            showToast("Error", "Failed to toggle window", "error");
                           }
                         }}
                       >
@@ -282,26 +260,14 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                         className="cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
                         onClick={async () => {
                           try {
-                            const result =
-                              await window.electronAPI.triggerScreenshot()
+                            const result = await window.electronAPI.triggerScreenshot();
                             if (!result.success) {
-                              console.error(
-                                "Failed to take screenshot:",
-                                result.error
-                              )
-                              showToast(
-                                "Error",
-                                "Failed to take screenshot",
-                                "error"
-                              )
+                              console.error("Failed to take screenshot:", result.error);
+                              showToast("Error", "Failed to take screenshot", "error");
                             }
                           } catch (error) {
-                            console.error("Error taking screenshot:", error)
-                            showToast(
-                              "Error",
-                              "Failed to take screenshot",
-                              "error"
-                            )
+                            console.error("Error taking screenshot:", error);
+                            showToast("Error", "Failed to take screenshot", "error");
                           }
                         }}
                       >
@@ -324,37 +290,20 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                       {/* Solve Command */}
                       <div
                         className={`cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors ${
-                          screenshotCount > 0
-                            ? ""
-                            : "opacity-50 cursor-not-allowed"
+                          screenshotCount > 0 ? "" : "opacity-50 cursor-not-allowed"
                         }`}
                         onClick={async () => {
-                          if (screenshotCount === 0) return
+                          if (screenshotCount === 0) return;
 
                           try {
-                            const result =
-                              await window.electronAPI.triggerProcessScreenshots()
+                            const result = await window.electronAPI.triggerProcessScreenshots();
                             if (!result.success) {
-                              console.error(
-                                "Failed to process screenshots:",
-                                result.error
-                              )
-                              showToast(
-                                "Error",
-                                "Failed to process screenshots",
-                                "error"
-                              )
+                              console.error("Failed to process screenshots:", result.error);
+                              showToast("Error", "Failed to process screenshots", "error");
                             }
                           } catch (error) {
-                            console.error(
-                              "Error processing screenshots:",
-                              error
-                            )
-                            showToast(
-                              "Error",
-                              "Failed to process screenshots",
-                              "error"
-                            )
+                            console.error("Error processing screenshots:", error);
+                            showToast("Error", "Failed to process screenshots", "error");
                           }
                         }}
                       >
@@ -375,37 +324,28 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                             : "Take a screenshot first to generate a solution."}
                         </p>
                       </div>
-                      
+
                       {/* Delete Last Screenshot Command */}
                       <div
                         className={`cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors ${
-                          screenshotCount > 0
-                            ? ""
-                            : "opacity-50 cursor-not-allowed"
+                          screenshotCount > 0 ? "" : "opacity-50 cursor-not-allowed"
                         }`}
                         onClick={async () => {
-                          if (screenshotCount === 0) return
-                          
+                          if (screenshotCount === 0) return;
+
                           try {
-                            const result = await window.electronAPI.deleteLastScreenshot()
+                            const result = await window.electronAPI.deleteLastScreenshot();
                             if (!result.success) {
-                              console.error(
-                                "Failed to delete last screenshot:",
-                                result.error
-                              )
+                              console.error("Failed to delete last screenshot:", result.error);
                               showToast(
                                 "Error",
                                 result.error || "Failed to delete screenshot",
                                 "error"
-                              )
+                              );
                             }
                           } catch (error) {
-                            console.error("Error deleting screenshot:", error)
-                            showToast(
-                              "Error",
-                              "Failed to delete screenshot",
-                              "error"
-                            )
+                            console.error("Error deleting screenshot:", error);
+                            showToast("Error", "Failed to delete screenshot", "error");
                           }
                         }}
                       >
@@ -432,15 +372,15 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                     <div className="pt-3 mt-3 border-t border-white/10">
                       {/* Simplified Language Selector */}
                       <div className="mb-3 px-2">
-                        <div 
+                        <div
                           className="flex items-center justify-between cursor-pointer hover:bg-white/10 rounded px-2 py-1 transition-colors"
-                          onClick={() => extractLanguagesAndUpdate('next')}
+                          onClick={() => extractLanguagesAndUpdate("next")}
                           tabIndex={0}
                           onKeyDown={(e) => {
-                            if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-                              extractLanguagesAndUpdate('prev');
-                            } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-                              extractLanguagesAndUpdate('next');
+                            if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+                              extractLanguagesAndUpdate("prev");
+                            } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+                              extractLanguagesAndUpdate("next");
                             }
                           }}
                         >
@@ -448,8 +388,17 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                           <div className="flex items-center gap-2">
                             <span className="text-[11px] text-white/90">{currentLanguage}</span>
                             <div className="text-white/40 text-[8px]">
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
-                                <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="w-3 h-3"
+                              >
+                                <path d="M7 13l5 5 5-5M7 6l5 5 5-5" />
                               </svg>
                             </div>
                           </div>
@@ -500,7 +449,7 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default QueueCommands
+export default QueueCommands;

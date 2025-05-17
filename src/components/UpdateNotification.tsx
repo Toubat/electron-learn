@@ -1,61 +1,57 @@
-import React, { useEffect, useState } from "react"
-import { Dialog, DialogContent } from "./ui/dialog"
-import { Button } from "./ui/button"
-import { useToast } from "../contexts/toast"
+import React, { useEffect, useState } from "react";
+import { useToast } from "../contexts/toast";
+import { Button } from "./ui/button";
+import { Dialog, DialogContent } from "./ui/dialog";
 
 export const UpdateNotification: React.FC = () => {
-  const [updateAvailable, setUpdateAvailable] = useState(false)
-  const [updateDownloaded, setUpdateDownloaded] = useState(false)
-  const [isDownloading, setIsDownloading] = useState(false)
-  const { showToast } = useToast()
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [updateDownloaded, setUpdateDownloaded] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
-    console.log("UpdateNotification: Setting up event listeners")
+    console.log("UpdateNotification: Setting up event listeners");
 
-    const unsubscribeAvailable = window.electronAPI.onUpdateAvailable(
-      (info) => {
-        console.log("UpdateNotification: Update available received", info)
-        setUpdateAvailable(true)
-      }
-    )
+    const unsubscribeAvailable = window.electronAPI.onUpdateAvailable((info) => {
+      console.log("UpdateNotification: Update available received", info);
+      setUpdateAvailable(true);
+    });
 
-    const unsubscribeDownloaded = window.electronAPI.onUpdateDownloaded(
-      (info) => {
-        console.log("UpdateNotification: Update downloaded received", info)
-        setUpdateDownloaded(true)
-        setIsDownloading(false)
-      }
-    )
+    const unsubscribeDownloaded = window.electronAPI.onUpdateDownloaded((info) => {
+      console.log("UpdateNotification: Update downloaded received", info);
+      setUpdateDownloaded(true);
+      setIsDownloading(false);
+    });
 
     return () => {
-      console.log("UpdateNotification: Cleaning up event listeners")
-      unsubscribeAvailable()
-      unsubscribeDownloaded()
-    }
-  }, [])
+      console.log("UpdateNotification: Cleaning up event listeners");
+      unsubscribeAvailable();
+      unsubscribeDownloaded();
+    };
+  }, []);
 
   const handleStartUpdate = async () => {
-    console.log("UpdateNotification: Starting update download")
-    setIsDownloading(true)
-    const result = await window.electronAPI.startUpdate()
-    console.log("UpdateNotification: Update download result", result)
+    console.log("UpdateNotification: Starting update download");
+    setIsDownloading(true);
+    const result = await window.electronAPI.startUpdate();
+    console.log("UpdateNotification: Update download result", result);
     if (!result.success) {
-      setIsDownloading(false)
-      showToast("Error", "Failed to download update", "error")
+      setIsDownloading(false);
+      showToast("Error", "Failed to download update", "error");
     }
-  }
+  };
 
   const handleInstallUpdate = () => {
-    console.log("UpdateNotification: Installing update")
-    window.electronAPI.installUpdate()
-  }
+    console.log("UpdateNotification: Installing update");
+    window.electronAPI.installUpdate();
+  };
 
   console.log("UpdateNotification: Render state", {
     updateAvailable,
     updateDownloaded,
-    isDownloading
-  })
-  if (!updateAvailable && !updateDownloaded) return null
+    isDownloading,
+  });
+  if (!updateAvailable && !updateDownloaded) return null;
 
   return (
     <Dialog open={true}>
@@ -65,9 +61,7 @@ export const UpdateNotification: React.FC = () => {
       >
         <div className="p-4">
           <h2 className="text-lg font-semibold mb-4">
-            {updateDownloaded
-              ? "Update Ready to Install"
-              : "A New Version is Available"}
+            {updateDownloaded ? "Update Ready to Install" : "A New Version is Available"}
           </h2>
           <p className="text-sm text-white/70 mb-6">
             {updateDownloaded
@@ -97,5 +91,5 @@ export const UpdateNotification: React.FC = () => {
         </div>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
